@@ -1,0 +1,8 @@
+.env
+ai-powered-legacy-codebase-firebase-adminsdk-fbsvc-be2b16dc25.json
+node_modules/
+package-lock.json 
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
