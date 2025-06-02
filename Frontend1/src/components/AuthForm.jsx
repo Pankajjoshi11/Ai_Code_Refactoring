@@ -6,11 +6,13 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -20,10 +22,12 @@ export default function AuthForm() {
         const token = await userCred.user.getIdToken();
         localStorage.setItem("authToken", token);
         alert("Login successful!");
+        navigate("/home");
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
         alert("Sign up successful!");
         setIsLogin(true);
+        navigate("/home");
       }
     } catch (error) {
       alert(error.message);
@@ -37,22 +41,23 @@ export default function AuthForm() {
       const token = await userCred.user.getIdToken();
       localStorage.setItem("authToken", token);
       alert("Google Sign-In successful!");
+      navigate("/home");
     } catch (error) {
       alert(error.message);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h2>{isLogin ? "Login" : "Sign Up"}</h2>
-      <form onSubmit={handleAuth} style={styles.form}>
+    <div className="max-w-md mx-auto mt-24 p-6 bg-white shadow-md rounded-lg text-center">
+      <h2 className="text-2xl font-bold mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
+      <form onSubmit={handleAuth} className="flex flex-col gap-4">
         <input
           type="email"
           placeholder="Email"
           value={email}
           required
           onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
+          className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
         />
         <input
           type="password"
@@ -60,68 +65,30 @@ export default function AuthForm() {
           value={password}
           required
           onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
+          className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
         />
-        <button type="submit" style={styles.button}>
+        <button
+          type="submit"
+          className="p-3 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+        >
           {isLogin ? "Login" : "Sign Up"}
         </button>
       </form>
-      <button onClick={handleGoogleSignIn} style={styles.googleButton}>
+      <button
+        onClick={handleGoogleSignIn}
+        className="mt-4 p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full"
+      >
         Sign In with Google
       </button>
-      <p style={styles.toggleText}>
+      <p className="mt-4 text-sm">
         {isLogin ? "Don't have an account?" : "Already have an account?"}
-        <button onClick={() => setIsLogin(!isLogin)} style={styles.toggleButton}>
+        <button
+          onClick={() => setIsLogin(!isLogin)}
+          className="ml-1 text-blue-500 hover:underline"
+        >
           {isLogin ? "Sign Up" : "Login"}
         </button>
       </p>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: "300px",
-    margin: "100px auto",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    textAlign: "center",
-    fontFamily: "Arial",
-  },
-  form: { display: "flex", flexDirection: "column" },
-  input: {
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    padding: "10px",
-    borderRadius: "5px",
-    border: "none",
-    backgroundColor: "#4CAF50",
-    color: "white",
-    cursor: "pointer",
-  },
-  googleButton: {
-    padding: "10px",
-    marginTop: "10px",
-    borderRadius: "5px",
-    border: "none",
-    backgroundColor: "#4285F4",
-    color: "white",
-    cursor: "pointer",
-  },
-  toggleText: {
-    marginTop: "15px",
-    fontSize: "14px",
-  },
-  toggleButton: {
-    marginLeft: "5px",
-    border: "none",
-    background: "none",
-    color: "#007BFF",
-    cursor: "pointer",
-  },
-};
