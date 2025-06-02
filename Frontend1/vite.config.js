@@ -9,4 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  define: {
+    'process.env': {}, // Provide an empty object to avoid ReferenceError
+  },
 })

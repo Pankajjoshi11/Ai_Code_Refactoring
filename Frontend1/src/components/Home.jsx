@@ -23,6 +23,12 @@ export default function Home() {
         Your hub for managing and refactoring legacy code with AI assistance.
       </p>
       <button
+        onClick={() => navigate('/upload')}
+        className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors mb-4"
+      >
+        Upload Code
+      </button>
+      <button
         onClick={handleLogout}
         className="p-3 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
       >
