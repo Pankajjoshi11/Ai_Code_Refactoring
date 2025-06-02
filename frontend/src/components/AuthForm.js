@@ -3,6 +3,8 @@ import { auth } from "../firebase/firebaseConfig";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from "firebase/auth";
 
 export default function AuthForm() {
@@ -23,6 +25,18 @@ export default function AuthForm() {
         alert("Sign up successful!");
         setIsLogin(true);
       }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const userCred = await signInWithPopup(auth, provider);
+      const token = await userCred.user.getIdToken();
+      localStorage.setItem("authToken", token);
+      alert("Google Sign-In successful!");
     } catch (error) {
       alert(error.message);
     }
@@ -52,6 +66,9 @@ export default function AuthForm() {
           {isLogin ? "Login" : "Sign Up"}
         </button>
       </form>
+      <button onClick={handleGoogleSignIn} style={styles.googleButton}>
+        Sign In with Google
+      </button>
       <p style={styles.toggleText}>
         {isLogin ? "Don't have an account?" : "Already have an account?"}
         <button onClick={() => setIsLogin(!isLogin)} style={styles.toggleButton}>
@@ -84,6 +101,15 @@ const styles = {
     borderRadius: "5px",
     border: "none",
     backgroundColor: "#4CAF50",
+    color: "white",
+    cursor: "pointer",
+  },
+  googleButton: {
+    padding: "10px",
+    marginTop: "10px",
+    borderRadius: "5px",
+    border: "none",
+    backgroundColor: "#4285F4",
     color: "white",
     cursor: "pointer",
   },
