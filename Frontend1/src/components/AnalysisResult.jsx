@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { getAISuggestions } from '../utils/aiSuggestor';
 import { lookupDocumentation as getDocumentation } from '../utils/docsLookup';
@@ -10,13 +10,16 @@ export default function AnalysisResult() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasAnalyzed = useRef(false); // Prevent multiple analyses
 
   useEffect(() => {
     const analyzeFiles = async () => {
-      if (!state?.files) {
-        navigate('/upload');
+      if (!state?.files || hasAnalyzed.current) {
+        if (!state?.files) navigate('/upload');
         return;
       }
+
+      hasAnalyzed.current = true;
 
       try {
         const analysisResults = await Promise.all(
@@ -31,7 +34,6 @@ export default function AnalysisResult() {
               language = 'JavaScript';
               try {
                 const token = localStorage.getItem('authToken');
-                console.log(token);
                 const response = await axios.post(
                   `${import.meta.env.VITE_BACKEND_URL}/api/js/parse`,
                   { code },
@@ -43,8 +45,16 @@ export default function AnalysisResult() {
                   }
                 );
                 const { deprecated, error } = response.data;
-                if (error) return { ...fileResult, error };
-                deprecatedPatterns = deprecated;
+                if (error) {
+                  // Treat syntax errors as a pattern
+                  deprecatedPatterns = [{
+                    type: 'SyntaxError',
+                    line: error.match(/line (\d+)/)?.[1] || 0,
+                    message: error,
+                  }];
+                } else {
+                  deprecatedPatterns = deprecated;
+                }
               } catch (err) {
                 return { ...fileResult, error: `Failed to parse JavaScript: ${err.message}` };
               }
@@ -62,10 +72,23 @@ export default function AnalysisResult() {
                 }
               );
               const { deprecated, error } = response.data;
-              if (error) return { ...fileResult, error };
-              deprecatedPatterns = deprecated;
+              if (error) {
+                // Treat syntax errors as a pattern
+                deprecatedPatterns = [{
+                  type: 'SyntaxError',
+                  line: error.match(/line (\d+)/)?.[1] || 0,
+                  message: error,
+                }];
+              } else {
+                deprecatedPatterns = deprecated;
+              }
             } else {
               return { ...fileResult, error: 'Unsupported file type.' };
+            }
+
+            // Skip AI suggestions if no patterns or errors were detected
+            if (deprecatedPatterns.length === 0) {
+              return { ...fileResult, suggestions: [], message: 'No issues detected.' };
             }
 
             let suggestions = [];
@@ -78,11 +101,31 @@ export default function AnalysisResult() {
               return { ...fileResult, error: `Failed to get AI suggestions: ${err.message}` };
             }
 
+            // Combine suggestions for the same line and suggestion code
+            const combinedSuggestions = [];
+            const seen = new Set();
+            for (const suggestion of suggestions) {
+              const key = `${suggestion.line}-${suggestion.suggestion}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                const relatedSuggestions = suggestions.filter(
+                  (s) => s.line === suggestion.line && s.suggestion === suggestion.suggestion
+                );
+                const combinedTypes = relatedSuggestions.map(s => s.type).join(', ');
+                const combinedMessages = relatedSuggestions.map(s => s.message).join('; ');
+                combinedSuggestions.push({
+                  ...suggestion,
+                  type: combinedTypes,
+                  message: combinedMessages,
+                });
+              }
+            }
+
             const enrichedSuggestions = await Promise.all(
-              suggestions.map(async (suggestion) => {
+              combinedSuggestions.map(async (suggestion) => {
                 try {
                   const documentation = await Promise.race([
-                    getDocumentation(suggestion.type),
+                    getDocumentation(suggestion.type.split(', ')[0]), // Use the first type for documentation
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Docs lookup timeout')), 5000)), // 5s timeout
                   ]);
                   return { ...suggestion, documentation };
@@ -131,6 +174,8 @@ export default function AnalysisResult() {
           <h2 className="text-xl font-semibold mb-4">File: {result.file}</h2>
           {result.error ? (
             <p className="text-red-500">{result.error}</p>
+          ) : result.message ? (
+            <p className="text-green-500">{result.message}</p>
           ) : (
             <ul className="space-y-4">
               {result.suggestions.map((suggestion, idx) => (

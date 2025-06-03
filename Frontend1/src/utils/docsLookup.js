@@ -43,6 +43,10 @@ const docsMap = {
     url: 'https://docs.python.org/3/howto/sorting.html#sorting-how-to',
     description: 'Python documentation on sorting with key functions.',
   },
+  'SyntaxError': {
+    url: 'https://docs.python.org/3/reference/simple_stmts.html#the-print-statement',
+    description: 'Python documentation on print() function.',
+  },
 };
 
 export const lookupDocumentation = (patternType) => {
