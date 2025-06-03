@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { updateCode } = require('../controllers/updateControllers');
+const { parseJavaScriptCode } = require('../controllers/jsParser');
 const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/', authMiddleware, updateCode);
+router.post('/parse', authMiddleware, parseJavaScriptCode);
 
 module.exports = router;
