@@ -14,7 +14,7 @@ export default function Home({ redirectPath = "/upload" }) {
         transition={{ duration: 0.8 }}
       >
         <div>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl leading-relaxed sm:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
             Activate AI Assistance For Programming
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
