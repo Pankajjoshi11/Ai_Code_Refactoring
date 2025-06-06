@@ -16,31 +16,32 @@ export default function AuthForm() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
+const handleAuth = async (e) => {
+  e.preventDefault();
 
-    if (!email || !password) {
-      toast.error("Please fill out all fields.");
-      return;
-    }
+  if (!email || !password) {
+    toast.error("Please fill out all fields.");
+    return;
+  }
 
-    try {
-      if (isLogin) {
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-        const token = await userCred.user.getIdToken();
-        localStorage.setItem("authToken", token);
-        toast.success("Login successful!");
-        navigate("/home");
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-        toast.success("Sign up successful!");
-        setIsLogin(true);
-        navigate("/home");
-      }
-    } catch (error) {
-      toast.error(error.message);
+  try {
+    if (isLogin) {
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCred.user.getIdToken();
+      localStorage.setItem("authToken", token);
+      toast.success("Login successful!");
+      navigate(`/${userCred.user.uid}`);
+    } else {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password); // ✅ FIXED LINE
+      const token = await userCred.user.getIdToken(); // Optional: store token here too
+      localStorage.setItem("authToken", token);
+      toast.success("Sign up successful!");
+      navigate(`/${userCred.user.uid}`); // ✅ Redirect using UID
     }
-  };
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
@@ -49,7 +50,7 @@ export default function AuthForm() {
       const token = await userCred.user.getIdToken();
       localStorage.setItem("authToken", token);
       toast.success("Google Sign-In successful!");
-      navigate("/home");
+      navigate(`/${userCred.user.uid}`);
     } catch (error) {
       toast.error(error.message);
     }

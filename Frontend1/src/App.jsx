@@ -1,18 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AuthForm from './components/AuthForm';
-import Home from './components/Home';
-import FileUpload from './components/FileUpload';
-import AnalysisResult from './components/AnalysisResult';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { auth } from './firebase/firebaseConfig';
+import AppRoutes from './AppRoutes';
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<AuthForm />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/upload" element={<FileUpload />} />
-        <Route path="/analyze" element={<AnalysisResult />} />
-      </Routes>
+      <AppRoutes />
     </Router>
   );
 }

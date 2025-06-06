@@ -1,39 +1,33 @@
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase/firebaseConfig";
-import { signOut } from "firebase/auth";
 
-export default function Home() {
+export default function Home({ redirectPath = "/upload" }) {
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem("authToken");
-      alert("Logged out successfully!");
-      navigate("/");
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold mb-4">Welcome to AI Codebase Refactor</h1>
-      <p className="text-lg text-gray-600 mb-6">
-        Your hub for managing and refactoring legacy code with AI assistance.
-      </p>
-      <button
-        onClick={() => navigate('/upload')}
-        className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors mb-4"
+    <>
+      {/* Hero Section */}
+      <motion.div
+        className="relative z-10 flex items-center justify-center min-h-[70vh] px-4 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
       >
-        Upload Code
-      </button>
-      <button
-        onClick={handleLogout}
-        className="p-3 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-      >
-        Logout
-      </button>
-    </div>
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+            Activate AI Assistance For Programming
+          </h1>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
+            Save Context & Generate Tailored Output according to your Codebase, Database Schema, & Tech Stack.
+          </p>
+          <button
+            onClick={() => navigate(redirectPath)}
+            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full hover:scale-105 transform transition-all duration-300 ease-in-out"
+          >
+            Get Started
+          </button>
+        </div>
+      </motion.div>
+    </>
   );
 }
