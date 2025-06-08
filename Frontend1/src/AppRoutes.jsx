@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { auth } from './firebase/firebaseConfig';
 import { Toaster, toast } from 'react-hot-toast';
@@ -9,6 +9,7 @@ import FileUpload from './components/FileUpload';
 import AnalysisResult from './components/AnalysisResult';
 import Navbar from './components/Navbar';
 import Playground from './components/Playground';
+import Dashboard from './components/Dashboard';
 
 // PrivateRoute wrapper
 function PrivateRoute({ children }) {
@@ -36,8 +37,9 @@ export default function AppRoutes() {
     return () => unsubscribe();
   }, []);
 
-  // Conditionally render Navbar and background (exclude on /auth route)
-  const showNavbarAndBackground = location.pathname !== '/auth';
+  // Conditionally render Navbar and background (exclude on /auth and dashboard routes)
+  const isDashboardRoute = location.pathname.includes('/dashboard');
+  const showNavbarAndBackground = location.pathname !== '/auth' && !isDashboardRoute;
 
   // Redirect authenticated users to user-specific routes
   const redirectPath = (basePath) => {
@@ -63,7 +65,7 @@ export default function AppRoutes() {
         </>
       )}
 
-      {/* Navbar (exclude on /auth route) */}
+      {/* Navbar (exclude on /auth and dashboard routes) */}
       {showNavbarAndBackground && <Navbar />}
 
       {/* Page content */}
@@ -129,6 +131,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <Playground user={user} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/:userId/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard userId={location.pathname.split('/')[1]} />
             </PrivateRoute>
           }
         />
