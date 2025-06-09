@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { auth } from './firebase/firebaseConfig';
 import { Toaster, toast } from 'react-hot-toast';
@@ -10,13 +10,13 @@ import AnalysisResult from './components/AnalysisResult';
 import Navbar from './components/Navbar';
 import Playground from './components/Playground';
 import Dashboard from './components/Dashboard';
+import Workspaces from './components/Workspaces'; // Import the new Workspaces component
 
 // PrivateRoute wrapper
-function PrivateRoute({ children }) {
-  const token = localStorage.getItem('authToken');
+function PrivateRoute({ children, user }) {
   const location = useLocation();
 
-  if (!token) {
+  if (!user) {
     // Show toast if trying to access playground without being logged in
     if (location.pathname.includes('/playground')) {
       toast.error('You need to login to have access to playground');
@@ -33,12 +33,17 @@ export default function AppRoutes() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        localStorage.setItem('authToken', currentUser.uid); // Sync localStorage with Firebase user
+      } else {
+        localStorage.removeItem('authToken');
+      }
     });
     return () => unsubscribe();
   }, []);
 
   // Conditionally render Navbar and background (exclude on /auth and dashboard routes)
-  const isDashboardRoute = location.pathname.includes('/dashboard');
+  const isDashboardRoute = location.pathname.includes('/dashboard') || location.pathname.includes('/workspace');
   const showNavbarAndBackground = location.pathname !== '/auth' && !isDashboardRoute;
 
   // Redirect authenticated users to user-specific routes
@@ -65,7 +70,7 @@ export default function AppRoutes() {
         </>
       )}
 
-      {/* Navbar (exclude on /auth and dashboard routes) */}
+      {/* Navbar (exclude on /auth, dashboard, and workspace routes) */}
       {showNavbarAndBackground && <Navbar />}
 
       {/* Page content */}
@@ -87,17 +92,9 @@ export default function AppRoutes() {
 
         {/* Protected Routes */}
         <Route
-          path="/home"
-          element={
-            <PrivateRoute>
-              <Home user={user} redirectPath={redirectPath('/upload')} />
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/:userId"
           element={
-            <PrivateRoute>
+            <PrivateRoute user={user}>
               <Home user={user} redirectPath={redirectPath('/upload')} />
             </PrivateRoute>
           }
@@ -105,7 +102,7 @@ export default function AppRoutes() {
         <Route
           path="/:userId/upload"
           element={
-            <PrivateRoute>
+            <PrivateRoute user={user}>
               <FileUpload user={user} redirectPath={redirectPath('/upload')} />
             </PrivateRoute>
           }
@@ -113,23 +110,15 @@ export default function AppRoutes() {
         <Route
           path="/:userId/analyze"
           element={
-            <PrivateRoute>
+            <PrivateRoute user={user}>
               <AnalysisResult user={user} redirectPath={redirectPath('/analyze')} />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/playground"
-          element={
-            <PrivateRoute>
-              <Playground />
             </PrivateRoute>
           }
         />
         <Route
           path="/:userId/playground"
           element={
-            <PrivateRoute>
+            <PrivateRoute user={user}>
               <Playground user={user} />
             </PrivateRoute>
           }
@@ -137,13 +126,21 @@ export default function AppRoutes() {
         <Route
           path="/:userId/dashboard"
           element={
-            <PrivateRoute>
-              <Dashboard userId={location.pathname.split('/')[1]} />
+            <PrivateRoute user={user}>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/:userId/workspace/:workspaceId"
+          element={
+            <PrivateRoute user={user}>
+              <Workspaces />
             </PrivateRoute>
           }
         />
 
-        {/* Optional 404 fallback */}
+        {/* Removed redundant routes */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
