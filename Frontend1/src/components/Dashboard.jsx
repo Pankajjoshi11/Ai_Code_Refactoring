@@ -133,11 +133,11 @@ export default function Dashboard() {
     if (!newProjectData) return;
 
     try {
-      await addDoc(collection(db, "projects"), newProjectData);
+      const docRef = await addDoc(collection(db, "projects"), newProjectData);
       if (option === "open" && newProjectData.workspaces.length > 0) {
-        // Redirect to the first workspace
+        const projectId = encodeURIComponent(docRef.id);
         const workspaceId = encodeURIComponent(newProjectData.workspaces[0]);
-        navigate(`/${user.uid}/workspace/${workspaceId}`);
+        navigate(`/${user.uid}/project/${projectId}/workspace/${workspaceId}`);
       } else {
         setShowWorkspaceOptionsModal(false);
       }
@@ -152,8 +152,9 @@ export default function Dashboard() {
 
   const handleProjectClick = (project) => {
     if (project.workspaces.length > 0) {
+      const projectId = encodeURIComponent(project.id);
       const workspaceId = encodeURIComponent(project.workspaces[0]);
-      navigate(`/${user.uid}/workspace/${workspaceId}`);
+      navigate(`/${user.uid}/project/${projectId}/workspace/${workspaceId}`);
     } else {
       alert("This project has no workspaces.");
     }

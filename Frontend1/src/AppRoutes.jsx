@@ -10,7 +10,7 @@ import AnalysisResult from './components/AnalysisResult';
 import Navbar from './components/Navbar';
 import Playground from './components/Playground';
 import Dashboard from './components/Dashboard';
-import Workspaces from './components/Workspaces'; // Import the new Workspaces component
+import Workspaces from './components/Workspaces';
 
 // PrivateRoute wrapper
 function PrivateRoute({ children, user }) {
@@ -43,7 +43,7 @@ export default function AppRoutes() {
   }, []);
 
   // Conditionally render Navbar and background (exclude on /auth and dashboard routes)
-  const isDashboardRoute = location.pathname.includes('/dashboard') || location.pathname.includes('/workspace');
+  const isDashboardRoute = location.pathname.includes('/dashboard') || location.pathname.includes('/project');
   const showNavbarAndBackground = location.pathname !== '/auth' && !isDashboardRoute;
 
   // Redirect authenticated users to user-specific routes
@@ -70,7 +70,7 @@ export default function AppRoutes() {
         </>
       )}
 
-      {/* Navbar (exclude on /auth, dashboard, and workspace routes) */}
+      {/* Navbar (exclude on /auth, dashboard, and project routes) */}
       {showNavbarAndBackground && <Navbar />}
 
       {/* Page content */}
@@ -132,15 +132,20 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/:userId/workspace/:workspaceId"
+          path="/:userId/project/:projectId/workspace/:workspaceId"
           element={
             <PrivateRoute user={user}>
               <Workspaces />
             </PrivateRoute>
           }
         />
+        {/* Redirect old workspace route to dashboard */}
+        <Route
+          path="/:userId/workspace/:workspaceId"
+          element={<Navigate to="/:userId/dashboard" replace />}
+        />
 
-        {/* Removed redundant routes */}
+        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
