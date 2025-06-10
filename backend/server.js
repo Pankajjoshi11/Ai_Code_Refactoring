@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const updateRoute = require('./routes/updateRoutes');
 const pythonRoute = require('./routes/pythonRoutes');
 const jsRoute = require('./routes/jsRoutes');
+const githubRoutes = require('./routes/githubRoutes');
 
 const app = express();
 
@@ -26,6 +27,8 @@ app.use(express.json());
 app.use('/api/update', updateRoute);
 app.use('/api/python', pythonRoute);
 app.use('/api/js', jsRoute);
+app.use('/', githubRoutes);
+
 
 // Global error handler
 app.use((err, req, res, next) => {

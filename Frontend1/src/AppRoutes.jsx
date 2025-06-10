@@ -132,13 +132,14 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/:userId/project/:projectId/workspace/:workspaceId"
+          path="/:userId/project/:projectId/workspace/:workspaceId/*"
           element={
             <PrivateRoute user={user}>
               <Workspaces />
             </PrivateRoute>
           }
         />
+        
         {/* Redirect old workspace route to dashboard */}
         <Route
           path="/:userId/workspace/:workspaceId"
