@@ -11,14 +11,11 @@ import Navbar from './components/Navbar';
 import Playground from './components/Playground';
 import Dashboard from './components/Dashboard';
 import Workspaces from './components/Workspaces';
-import Integrations from './components/Integrations'; // Added import
 
-// PrivateRoute wrapper
 function PrivateRoute({ children, user }) {
   const location = useLocation();
 
   if (!user) {
-    // Show toast if trying to access playground without being logged in
     if (location.pathname.includes('/playground')) {
       toast.error('You need to login to have access to playground');
     }
@@ -42,7 +39,7 @@ export default function AppRoutes({
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        localStorage.setItem('authToken', currentUser.uid); // Sync localStorage with Firebase user
+        localStorage.setItem('authToken', currentUser.uid);
       } else {
         localStorage.removeItem('authToken');
       }
@@ -50,11 +47,9 @@ export default function AppRoutes({
     return () => unsubscribe();
   }, []);
 
-  // Conditionally render Navbar and background (exclude on /auth and dashboard routes)
   const isDashboardRoute = location.pathname.includes('/dashboard') || location.pathname.includes('/project');
   const showNavbarAndBackground = location.pathname !== '/auth' && !isDashboardRoute;
 
-  // Redirect authenticated users to user-specific routes
   const redirectPath = (basePath) => {
     if (user && user.uid) {
       return `/${user.uid}${basePath}`;
@@ -64,10 +59,7 @@ export default function AppRoutes({
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Toaster for displaying toast messages */}
       <Toaster position="top-right" />
-
-      {/* Background layers (only shown when Navbar is present) */}
       {showNavbarAndBackground && (
         <>
           <div
@@ -77,13 +69,8 @@ export default function AppRoutes({
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
         </>
       )}
-
-      {/* Navbar (exclude on /auth, dashboard, and project routes) */}
       {showNavbarAndBackground && <Navbar />}
-
-      {/* Page content */}
       <Routes>
-        {/* Public Routes */}
         <Route
           path="/"
           element={user ? <Navigate to={`/${user.uid}`} /> : <Home redirectPath={redirectPath('/upload')} />}
@@ -97,8 +84,6 @@ export default function AppRoutes({
           path="/analyze"
           element={<AnalysisResult redirectPath={redirectPath('/analyze')} />}
         />
-
-        {/* Protected Routes */}
         <Route
           path="/:userId"
           element={
@@ -156,29 +141,9 @@ export default function AppRoutes({
           }
         />
         <Route
-          path="/:userId/project/:projectId/workspace/:workspaceId/integrations"
-          element={
-            <PrivateRoute user={user}>
-              <Integrations
-                selectedFeature={selectedFeature}
-                handleFeatureSelect={handleFeatureSelect}
-                user={user}
-                handleLogout={handleLogout}
-                toggleDropdown={toggleDropdown}
-                showDropdown={showDropdown}
-                dropdownRef={dropdownRef}
-              />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Redirect old workspace route to dashboard */}
-        <Route
           path="/:userId/workspace/:workspaceId"
           element={<Navigate to="/:userId/dashboard" replace />}
         />
-
-        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

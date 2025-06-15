@@ -2,6 +2,8 @@ const axios = require('axios');
 const crypto = require('crypto');
 require('dotenv').config();
 
+console.log('Loaded GITHUB_REDIRECT_URI:', process.env.GITHUB_REDIRECT_URI);
+
 const redirectToGitHub = (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   req.session.state = state;
@@ -23,7 +25,7 @@ const handleCallback = async (req, res) => {
       client_id: process.env.GITHUB_CLIENT_ID,
       client_secret: process.env.GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri: process.env.GITHUB_REDIRECT_URI,
+      redirect_uri: process.env.REDIRECT_URL,
     }, {
       headers: { Accept: 'application/json' },
     });
@@ -152,7 +154,7 @@ const updateFile = async (req, res) => {
     res.json({ success: true, commit: response.data.commit });
   } catch (error) {
     console.error('Error pushing file:', error.message, error.response?.data);
-    res.status(500).json({ error: 'Error pushing file' });
+    res.status(500).json({ error: 'Error patching file' });
   }
 };
 
@@ -167,7 +169,7 @@ const selectRepositories = async (req, res) => {
     console.log('Selected repos saved:', selectedRepos);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error selecting repositories:', error.message);
+    console.error('Error selecting repos:', error.message);
     res.status(500).json({ error: 'Error selecting repositories' });
   }
 };
