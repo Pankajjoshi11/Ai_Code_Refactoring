@@ -1,4 +1,5 @@
 import React from 'react';
+import TrialIntegration from './TrialIntegration';
 
 const WorkSpaceContext = () => {
   return (
@@ -10,6 +11,7 @@ const WorkSpaceContext = () => {
           + Add context
         </button>
       </div>
+      <TrialIntegration/>
     </div>
   );
 };

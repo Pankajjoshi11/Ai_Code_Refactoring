@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import Playground from './components/Playground';
 import Dashboard from './components/Dashboard';
 import Workspaces from './components/Workspaces';
+import Integrations from './components/Integrations'; // Added import
 
 // PrivateRoute wrapper
 function PrivateRoute({ children, user }) {
@@ -26,7 +27,14 @@ function PrivateRoute({ children, user }) {
   return children;
 }
 
-export default function AppRoutes() {
+export default function AppRoutes({
+  selectedFeature,
+  handleFeatureSelect,
+  handleLogout,
+  toggleDropdown,
+  showDropdown,
+  dropdownRef,
+}) {
   const [user, setUser] = useState(null);
   const location = useLocation();
 
@@ -127,7 +135,15 @@ export default function AppRoutes() {
           path="/:userId/dashboard"
           element={
             <PrivateRoute user={user}>
-              <Dashboard />
+              <Dashboard
+                selectedFeature={selectedFeature}
+                handleFeatureSelect={handleFeatureSelect}
+                user={user}
+                handleLogout={handleLogout}
+                toggleDropdown={toggleDropdown}
+                showDropdown={showDropdown}
+                dropdownRef={dropdownRef}
+              />
             </PrivateRoute>
           }
         />
@@ -139,7 +155,23 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-        
+        <Route
+          path="/:userId/project/:projectId/workspace/:workspaceId/integrations"
+          element={
+            <PrivateRoute user={user}>
+              <Integrations
+                selectedFeature={selectedFeature}
+                handleFeatureSelect={handleFeatureSelect}
+                user={user}
+                handleLogout={handleLogout}
+                toggleDropdown={toggleDropdown}
+                showDropdown={showDropdown}
+                dropdownRef={dropdownRef}
+              />
+            </PrivateRoute>
+          }
+        />
+
         {/* Redirect old workspace route to dashboard */}
         <Route
           path="/:userId/workspace/:workspaceId"

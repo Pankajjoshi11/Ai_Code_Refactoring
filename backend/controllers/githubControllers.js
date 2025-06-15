@@ -1,18 +1,65 @@
 const axios = require('axios');
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_REDIRECT_URI } = require('../config/githubConfig');
+const jwt = require('jsonwebtoken');
+const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_REDIRECT_URI, FRONTEND_BASE_URL } = require('../config/githubConfig');
 const admin = require('../firebase/firebaseAdmin');
 
-const githubLogin = (req, res) => {
-  const { state } = req.query; // Capture the state parameter
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_REDIRECT_URI}&scope=repo user&state=${state || ''}`;
-  res.redirect(githubAuthUrl);
+const STATE_SECRET = process.env.STATE_SECRET;
+if (!STATE_SECRET) {
+  throw new Error('STATE_SECRET is not defined in environment variables');
+}
+
+const initGithubAuth = (req, res) => {
+  try {
+    const { state } = req.query;
+    if (!state) {
+      return res.status(400).json({ error: 'State parameter is required' });
+    }
+
+    const stateObj = JSON.parse(state);
+    if (!stateObj.token) {
+      return res.status(400).json({ error: 'Firebase token is required in state' });
+    }
+
+    const signedState = jwt.sign(stateObj, STATE_SECRET, { expiresIn: '5m' });
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=repo user&state=${encodeURIComponent(signedState)}`;
+    
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error in initGithubAuth:', error);
+    res.status(500).json({ error: 'Failed to initialize GitHub auth' });
+  }
 };
 
 const githubCallback = async (req, res) => {
   const { code, state } = req.query;
 
   try {
-    // Exchange code for access token
+    // Verify state structure
+    if (!state || !code) {
+      throw new Error('Missing required parameters: code and state');
+    }
+
+    // Verify and decode state
+    let decodedState;
+    try {
+      decodedState = jwt.verify(state, STATE_SECRET);
+    } catch (error) {
+      throw new Error(`Invalid state parameter: ${error.message}`);
+    }
+
+    // Validate token in state
+    const { projectId, workspaceId, token } = decodedState;
+    if (!token || typeof token !== 'string') {
+      throw new Error('Invalid Firebase token in state');
+    }
+
+    // Verify Firebase token with 5 minute tolerance
+    const decodedToken = await admin.auth().verifyIdToken(token, {
+      expiresIn: '5m'
+    });
+    const userId = decodedToken.uid;
+
+    // Exchange code for GitHub access token
     const tokenResponse = await axios.post(
       'https://github.com/login/oauth/access_token',
       {
@@ -22,46 +69,37 @@ const githubCallback = async (req, res) => {
         redirect_uri: GITHUB_REDIRECT_URI
       },
       {
-        headers: { Accept: 'application/json' }
+        headers: { Accept: 'application/json' },
+        timeout: 10000
       }
     );
 
-    const accessToken = tokenResponse.data.access_token;
-    if (!accessToken) {
-      throw new Error('Failed to obtain access token from GitHub');
+    if (!tokenResponse.data.access_token) {
+      throw new Error('GitHub returned no access token');
     }
 
-    // Get GitHub user info
-    const userResponse = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const accessToken = tokenResponse.data.access_token;
 
-    const userId = req.user.uid; // Use Firebase UID from authMiddleware
-
-    // Store access token in Firebase
+    // Store access token in Firestore
     await admin.firestore().collection('users').doc(userId).set(
-      { github_token: accessToken },
+      { 
+        github_token: accessToken,
+        github_token_updated: new Date() 
+      },
       { merge: true }
     );
 
-    // Parse the state parameter to get projectId and workspaceId
-    let redirectUrl = `http://localhost:3000/${userId}/dashboard`; // Fallback URL
-    if (state) {
-      try {
-        const { projectId, workspaceId } = JSON.parse(state);
-        if (projectId && workspaceId) {
-          redirectUrl = `http://localhost:3000/${userId}/project/${projectId}/workspace/${workspaceId}/integrations`;
-        }
-      } catch (error) {
-        console.error('Error parsing state parameter:', error);
-      }
-    }
-
-    // Redirect to the frontend
-    res.redirect(redirectUrl);
+    // Build redirect URL
+    const baseUrl = FRONTEND_BASE_URL || 'http://localhost:3000';
+    const redirectPath = projectId && workspaceId 
+      ? `/${userId}/project/${projectId}/workspace/${workspaceId}/integrations`
+      : `/${userId}/dashboard`;
+    
+    res.redirect(`${baseUrl}${redirectPath}?github_auth=success`);
   } catch (error) {
-    console.error('Error in GitHub callback:', error.message);
-    res.status(500).json({ error: 'Failed to authenticate with GitHub', details: error.message });
+    console.error('GitHub callback error:', error.message);
+    const baseUrl = FRONTEND_BASE_URL || 'http://localhost:3000';
+    res.redirect(`${baseUrl}/?github_error=${encodeURIComponent(error.message)}`);
   }
 };
 
@@ -140,7 +178,8 @@ const saveProjectContext = async (req, res) => {
 };
 
 module.exports = {
-  githubLogin,
+  initGithubAuth,
+  githubLogin: (req, res) => res.status(400).json({ error: 'Use /init-github-auth endpoint' }),
   githubCallback,
   getRepositories,
   getBranches,
