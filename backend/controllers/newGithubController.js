@@ -7,7 +7,7 @@ console.log('Loaded GITHUB_REDIRECT_URI:', process.env.GITHUB_REDIRECT_URI);
 const redirectToGitHub = (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   req.session.state = state;
-  const authUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URL)}&scope=repo&state=${state}`;
+  const authUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.GITHUB_REDIRECT_URI)}&scope=repo&state=${state}`;
   console.log('Redirecting to GitHub with authUrl:', authUrl);
   res.redirect(authUrl);
 };
@@ -25,7 +25,7 @@ const handleCallback = async (req, res) => {
       client_id: process.env.GITHUB_CLIENT_ID,
       client_secret: process.env.GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri: process.env.REDIRECT_URL,
+      redirect_uri: process.env.GITHUB_REDIRECT_URI, // Fixed from REDIRECT_URL
     }, {
       headers: { Accept: 'application/json' },
     });

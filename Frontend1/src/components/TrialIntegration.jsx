@@ -18,7 +18,7 @@ export default function TrialIntegration() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get('http://localhost:9000/repos', { withCredentials: true });
+        const response = await axios.get('http://localhost:5000/repos', { withCredentials: true });
         setAccessToken(true);
         setRepos(response.data);
         setShowRepoSelection(true);
@@ -32,7 +32,7 @@ export default function TrialIntegration() {
 
   const saveSelectedRepos = async () => {
     try {
-      await axios.post('http://localhost:9000/repos/select', {
+      await axios.post('http://localhost:5000/repos/select', {
         selectedRepos: selectedRepos.map(repo => repo.id),
       }, { withCredentials: true });
       setShowRepoSelection(false);
@@ -45,7 +45,7 @@ export default function TrialIntegration() {
   useEffect(() => {
     if (selectedRepo) {
       const [owner, repo] = selectedRepo.split('/');
-      axios.get(`http://localhost:9000/repos/${owner}/${repo}/branches`, { withCredentials: true })
+      axios.get(`http://localhost:5000/repos/${owner}/${repo}/branches`, { withCredentials: true })
         .then(res => setBranches(res.data))
         .catch(() => setError('Failed to fetch branches'));
     }
@@ -54,7 +54,7 @@ export default function TrialIntegration() {
   useEffect(() => {
     if (selectedRepo && selectedBranch) {
       const [owner, repo] = selectedRepo.split('/');
-      axios.get(`http://localhost:9000/repos/${owner}/${repo}/contents/`, {
+      axios.get(`http://localhost:5000/repos/${owner}/${repo}/contents/`, {
         params: { branch: selectedBranch },
         withCredentials: true,
       })
@@ -66,7 +66,7 @@ export default function TrialIntegration() {
   useEffect(() => {
     if (selectedRepo && selectedBranch && selectedFile) {
       const [owner, repo] = selectedRepo.split('/');
-      axios.get(`http://localhost:9000/repos/${owner}/${repo}/contents/${selectedFile}`, {
+      axios.get(`http://localhost:5000/repos/${owner}/${repo}/contents/${selectedFile}`, {
         params: { branch: selectedBranch },
         withCredentials: true,
       })
@@ -76,7 +76,7 @@ export default function TrialIntegration() {
   }, [selectedRepo, selectedBranch, selectedFile]);
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:9000/auth/github';
+    window.location.href = 'http://localhost:5000/auth/github';
   };
 
   const handleRepoToggle = (repo) => {
@@ -89,7 +89,7 @@ export default function TrialIntegration() {
 
   const handleRefactor = async () => {
     try {
-      const response = await axios.post('http://localhost:9000/refactor', { code }, { withCredentials: true });
+      const response = await axios.post('http://localhost:5000/refactor', { code }, { withCredentials: true });
       setRefactoredCode(response.data.refactoredCode);
       setError(null);
     } catch {
@@ -100,7 +100,7 @@ export default function TrialIntegration() {
   const handlePush = async () => {
     const [owner, repo] = selectedRepo.split('/');
     try {
-      await axios.post(`http://localhost:9000/repos/${owner}/${repo}/contents/${selectedFile}`, {
+      await axios.post(`http://localhost:5000/repos/${owner}/${repo}/contents/${selectedFile}`, {
         content: refactoredCode,
         branch: selectedBranch,
         message: 'Refactored code by AI',

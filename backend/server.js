@@ -2,15 +2,27 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
 const updateRoute = require('./routes/updateRoutes');
 const pythonRoute = require('./routes/pythonRoutes');
 const jsRoute = require('./routes/jsRoutes');
-const githubRoutes = require('./routes/githubRoutes');
+const githubRoutes = require('./routes/newGithubRoutes');
 
 const app = express();
 
 // CORS configuration
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, httpOnly: true, sameSite: 'lax' },
+}));
 
 // Rate limiting for /api/update to prevent abuse
 const updateLimiter = rateLimit({
@@ -28,7 +40,6 @@ app.use('/api/update', updateRoute);
 app.use('/api/python', pythonRoute);
 app.use('/api/js', jsRoute);
 app.use('/', githubRoutes);
-
 
 // Global error handler
 app.use((err, req, res, next) => {
